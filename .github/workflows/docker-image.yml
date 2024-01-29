@@ -25,7 +25,7 @@ jobs:
         context: .
         file: deploy/Dockerfile.a
         push: true
-        tags: connectai/gitmaya:latest
+        tags: dd1233/gitmaya:latest
 
   build-website:
     runs-on: ubuntu-latest
@@ -44,4 +44,4 @@ jobs:
         context: website
         file: deploy/Dockerfile.proxy
         push: true
-        tags: connectai/gitmaya-proxy:latest
+        tags: dd1233/gitmaya-proxy:latest
