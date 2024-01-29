@@ -2,7 +2,7 @@ import logging
 import os
 
 from celery_app import app, celery
-from connectai.lark.sdk import Bot, FeishuShareChatMessage, FeishuTextMessage
+from connectai.lark.sdk import FeishuShareChatMessage, FeishuTextMessage
 from model.schema import (
     BindUser,
     ChatGroup,
@@ -448,7 +448,7 @@ def send_repo_to_chat_group(repo_id, app_id, chat_id=""):
             repo_name=repo.name,
             repo_description=repo.description,
             repo_topic=repo.extra.get("topics", []),
-            homepage=repo.extra.get("homepage", repo_url),
+            homepage=repo.extra.get("homepage", None),
             open_issues_count=repo.extra.get("open_issues_count", 0),
             stargazers_count=repo.extra.get("stargazers_count", 0),
             forks_count=repo.extra.get("forks_count", 0),

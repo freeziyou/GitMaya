@@ -7,21 +7,15 @@ from connectai.lark.sdk import Bot, MarketBot
 from connectai.lark.webhook import LarkServer as LarkServerBase
 from flask import session
 from model.lark import get_bot_by_app_id
-from tasks.lark import get_contact_by_lark_application
+from tasks.lark import get_bot_by_application_id, get_contact_by_lark_application
 from utils.lark.parser import GitMayaLarkParser
 from utils.lark.post_message import post_content_to_markdown
 
 
 def get_bot(app_id):
     with app.app_context():
-        application = get_bot_by_app_id(app_id)
-        if application:
-            return Bot(
-                app_id=application.app_id,
-                app_secret=application.app_secret,
-                encrypt_key=application.extra.get("encrypt_key"),
-                verification_token=application.extra.get("verification_token"),
-            )
+        bot, _ = get_bot_by_application_id(app_id)
+        return bot
 
 
 class LarkServer(LarkServerBase):
@@ -65,7 +59,7 @@ def on_card_action(bot, token, data, message, *args, **kwargs):
 
 @hook.on_bot_message(message_type="post")
 def on_post_message(bot, message_id, content, message, *args, **kwargs):
-    text, _ = post_content_to_markdown(content, True)
+    text, title = post_content_to_markdown(content, False)
     content["text"] = text
     try:
         parser.parse_args(text, bot.app_id, message_id, content, message, **kwargs)

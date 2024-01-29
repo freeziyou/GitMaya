@@ -23,15 +23,15 @@ def pull_github_repo(
 
     # 拉取所有组织成员，创建 User 和 BindUser
     members = github_app.get_org_members(org_name)
-    if members is None or not isinstance(members, list):
+    # org 只有一个人的时候，members = 0
+    if members is None:
         raise Exception("Failed to get org members.")
 
     # 创建 user 和 team member
     create_github_member(members, application_id, team_id)
 
     # 拉取所有组织仓库，创建 Repo
-    repos = github_app.get_org_repos(org_name)
-
+    repos = github_app.get_org_repos_accessible()
     github_app = GitHubAppRepo(installation_id)
     try:
         for repo in repos:
@@ -64,7 +64,8 @@ def pull_github_members(
 
     members = github_app.get_org_members(org_name)
 
-    return create_github_member(members, application_id, team_id)
+    create_github_member(members, application_id, team_id)
+    return True
 
 
 @celery.task()

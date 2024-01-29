@@ -2,7 +2,8 @@ import os
 
 from app import app, db
 from celery_app import celery
-from model.schema import CodeUser, IMUser, Issue, ObjID, PullRequest, Repo, TeamMember
+from model.schema import Issue, ObjID, PullRequest, Repo
+from tasks.github.repo import on_repository_updated
 from tasks.lark.issue import send_issue_card, send_issue_comment, update_issue_card
 from tasks.lark.pull_request import send_pull_request_comment
 from utils.github.model import IssueCommentEvent, IssueEvent
@@ -150,34 +151,17 @@ def on_issue_opened(event_dict: dict | None) -> list:
         repo_id=repo.id,
         issue_number=issue_info.number,
         title=issue_info.title,
-        description=issue_info.body,
+        # TODO 这里超过1024的长度了，暂时不想单纯的增加字段长度，因为飞书那边消息也是有限制的
+        description=issue_info.body[:1000] if issue_info.body else None,
         extra=issue_info.model_dump(),
     )
     db.session.add(new_issue)
     db.session.commit()
 
-    assignees = issue_info.assignees if issue_info.assignees else []
-    if len(assignees):
-        assignees = [
-            openid
-            for openid, in db.session.query(IMUser.openid)
-            .join(TeamMember, TeamMember.im_user_id == IMUser.id)
-            .join(
-                CodeUser,
-                CodeUser.id == TeamMember.code_user_id,
-            )
-            .filter(
-                CodeUser.name.in_([i.login for i in assignees]),
-            )
-            .all()
-        ]
-    else:
-        assignees = []
+    task = send_issue_card.delay(issue_id=new_issue.id)
 
-    task = send_issue_card.delay(
-        issue_id=new_issue.id,
-        assignees=assignees,
-    )
+    # 新建issue之后也要更新 repo info
+    on_repository_updated(event.model_dump())
 
     return [task.id]
 
