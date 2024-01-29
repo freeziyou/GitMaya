@@ -24,6 +24,6 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        file: Dockerfile
+        file: deploy/Dockerfile
         push: true
         tags: dd1233/gitmaya:latest
